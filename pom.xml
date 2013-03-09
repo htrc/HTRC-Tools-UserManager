@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.illinois.i3.htrc</groupId>
 	<artifactId>UserManager</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -147,9 +146,9 @@
     </ciManagement>
 
     <scm>
-        <connection>scm:svn:${public.svn.root}/HTRC-Tools-UserManager/trunk</connection>
-        <developerConnection>scm:svn:${developer.svn.root}/HTRC-Tools-UserManager/trunk</developerConnection>
-        <url>${fisheye.svn.root}/HTRC-Tools-UserManager/trunk</url>
+        <connection>scm:svn:svn://svn.code.sf.net/p/htrc/code/HTRC-Tools-UserManager/tags/0.1.0</connection>
+        <developerConnection>scm:svn:svn+ssh://svn.code.sf.net/p/htrc/code/HTRC-Tools-UserManager/tags/0.1.0</developerConnection>
+        <url>http://fisheye.htrc.illinois.edu/changelog/HTRC-Tools-UserManager/tags/0.1.0</url>
     </scm>
 
 	<repositories>
