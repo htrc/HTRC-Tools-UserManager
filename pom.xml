@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.illinois.i3.htrc</groupId>
 	<artifactId>UserManager</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -40,32 +40,32 @@
 			<version>4.0.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.wso2.carbon</groupId>
-		    <artifactId>org.wso2.carbon.registry.ws.client</artifactId>
-		    <version>4.0.2</version>
-		    <exclusions>
-		    	<exclusion>
-		    		<artifactId>org.apache.log4j</artifactId>
-		    		<groupId>org.eclipse.equinox</groupId>
-		    	</exclusion>
-		    </exclusions>
+			<groupId>org.wso2.carbon</groupId>
+			<artifactId>org.wso2.carbon.registry.ws.client</artifactId>
+			<version>4.0.2</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>org.apache.log4j</artifactId>
+					<groupId>org.eclipse.equinox</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.wso2.carbon</groupId>
 			<artifactId>org.wso2.carbon.registry.core</artifactId>
 			<version>4.0.5</version>
 		</dependency>
-        <dependency>
+		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
 			<version>1.1.1</version>
 			<scope>provided</scope> <!-- used to specifically exclude all commons-logging dependencies -->
 		</dependency>
-        <dependency>
-		    <groupId>log4j</groupId>
-		    <artifactId>log4j</artifactId>
-		    <version>1.2.17</version>
-		    <scope>provided</scope> <!-- used to specifically exclude all log4j dependencies -->
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+			<scope>provided</scope> <!-- used to specifically exclude all log4j dependencies -->
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -122,35 +122,51 @@
 					</programs>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.4</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.scm</groupId>
+						<artifactId>maven-scm-provider-svnexe</artifactId>
+						<version>1.8.1</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<tagBase>${developer.svn.root}/HTRC-Tools-UserManager/tags</tagBase>
+					<useReleaseProfile>false</useReleaseProfile>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
-    <!-- Project Information -->
-    <name>User Manager</name>
-    <description>Library and application for managing HTRC user accounts</description>
-    <url>http://wiki.htrc.illinois.edu/display/DEV/USRMGR</url>
+	<!-- Project Information -->
+	<name>User Manager</name>
+	<description>Library and application for managing HTRC user accounts</description>
+	<url>http://wiki.htrc.illinois.edu/display/DEV/USRMGR</url>
 
-    <organization>
-        <name>HathiTrust Research Center</name>
-        <url>http://www.hathitrust.org/htrc</url>
-    </organization>
+	<organization>
+		<name>HathiTrust Research Center</name>
+		<url>http://www.hathitrust.org/htrc</url>
+	</organization>
 
-    <!-- Environment Settings -->
-    <issueManagement>
-        <system>jira</system>
-        <url>http://jira.htrc.illinois.edu/browse/USRMGR</url>
-    </issueManagement>
+	<!-- Environment Settings -->
+	<issueManagement>
+		<system>jira</system>
+		<url>http://jira.htrc.illinois.edu/browse/USRMGR</url>
+	</issueManagement>
 
-    <ciManagement>
-        <system>bamboo</system>
-        <url>http://bamboo.htrc.illinois.edu/browse/USRMGR</url>
-    </ciManagement>
+	<ciManagement>
+		<system>bamboo</system>
+		<url>http://bamboo.htrc.illinois.edu/browse/USRMGR</url>
+	</ciManagement>
 
-    <scm>
-        <connection>scm:svn:${public.svn.root}/HTRC-Tools-UserManager/trunk</connection>
-        <developerConnection>scm:svn:${developer.svn.root}/HTRC-Tools-UserManager/trunk</developerConnection>
-        <url>${fisheye.svn.root}/HTRC-Tools-UserManager/trunk</url>
-    </scm>
+	<scm>
+		<connection>scm:svn:${public.svn.root}/HTRC-Tools-UserManager/trunk</connection>
+		<developerConnection>scm:svn:${developer.svn.root}/HTRC-Tools-UserManager/trunk</developerConnection>
+		<url>${fisheye.svn.root}/HTRC-Tools-UserManager/trunk</url>
+	</scm>
 
 	<repositories>
 		<repository>
