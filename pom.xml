@@ -8,6 +8,9 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<public.svn.root>svn://svn.code.sf.net/p/htrc/code</public.svn.root>
+		<developer.svn.root>svn+ssh://svn.code.sf.net/p/htrc/code</developer.svn.root>
+		<fisheye.svn.root>http://fisheye.htrc.illinois.edu/changelog</fisheye.svn.root>
 	</properties>
 
 	<dependencies>
