@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%date{HH:mm:ss.SSS} \(%F:%L\) [%logger{0}] [%level] - %msg%n%ex{short}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>${basedir}/log/usermanager.log</file>
+		<append>true</append>
+		<encoder>
+			<pattern>%date{HH:mm:ss.SSS} \(%F:%L\) [%logger{0}] [%level] - %msg%n%ex{short}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Enable logging for the following loggers at the specified level (overrides global setting) -->
+	<!-- <logger name="edu.illinois.i3.htrc.usermanager" level="DEBUG" /> --> <!-- all descending from specified package -->
+	<logger name="org.apache.axis2" level="OFF" /> <!-- turn off Axis2 logging -->
+
+	<root level="INFO">
+		<appender-ref ref="FILE" />
+	</root>
+</configuration>
