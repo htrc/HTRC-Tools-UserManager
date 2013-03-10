@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.illinois.i3.htrc</groupId>
     <artifactId>UserManager</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -225,9 +225,9 @@
     </ciManagement>
 
     <scm>
-        <connection>scm:svn:${public.svn.root}/HTRC-Tools-UserManager/trunk</connection>
-        <developerConnection>scm:svn:${developer.svn.root}/HTRC-Tools-UserManager/trunk</developerConnection>
-        <url>${fisheye.svn.root}/HTRC-Tools-UserManager/trunk</url>
+        <connection>scm:svn:svn+ssh://svn.code.sf.net/p/htrc/code/HTRC-Tools-UserManager/tags/0.2.0</connection>
+        <developerConnection>scm:svn:svn+ssh://svn.code.sf.net/p/htrc/code/HTRC-Tools-UserManager/tags/0.2.0</developerConnection>
+        <url>scm:svn:svn+ssh://svn.code.sf.net/p/htrc/code/HTRC-Tools-UserManager/tags/0.2.0</url>
     </scm>
 
     <repositories>
