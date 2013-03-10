@@ -3,6 +3,8 @@ package edu.illinois.i3.htrc.usermanager.commands;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.wso2.carbon.CarbonConstants;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
@@ -50,7 +52,7 @@ public class CreateUserCommand {
 
 	@Parameter(
 			names = { "-x", "--permissions" },
-			description = "The user's permissions (example: login)",
+			description = "The user's permissions (example: " + CarbonConstants.UI_ADMIN_PERMISSION_COLLECTION + "/login)",
 			variableArity = true
 	)
 	public List<String> permissions = new ArrayList<String>();
