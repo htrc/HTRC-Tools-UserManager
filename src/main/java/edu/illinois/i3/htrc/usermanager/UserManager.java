@@ -50,7 +50,17 @@ public class UserManager {
 	private final ResourceAdminServiceStub _resourceAdmin;
 	private final Properties _configProps;
 
-	public static UserManager authenticate(String wso2Url, String wso2User, String wso2Password, ConfigurationContext configContext, Properties configProps) throws UserManagerException {
+	/**
+	 * Authenticate against a WSO2 G-Reg server and obtain a <code>UserManager</code> instance
+	 *
+	 * @param wso2Url The WSO2 G-Reg service URL
+	 * @param wso2User The username to authenticate to G-Reg (must have admin privileges)
+	 * @param wso2Password The password for the WSO2 user
+	 * @param configProps The HTRC configuration properties to use
+	 * @return An instance of <code>UserManager</code>
+	 * @throws UserManagerException Throws if the authentication failed or there was an error communicating with the server
+	 */
+	public static UserManager authenticate(String wso2Url, String wso2User, String wso2Password, Properties configProps) throws UserManagerException {
 		if (!wso2Url.endsWith("/")) wso2Url += "/";
 		try {
 			String authAdminEPR = wso2Url + "AuthenticationAdmin";
@@ -61,6 +71,7 @@ public class UserManager {
 					&& configProps.containsKey(Constants.CONFIG_HTRC_USER_WORKSETS)))
 				throw new UserManagerException("HTRC configuration missing or incomplete");
 
+			ConfigurationContext configContext = ConfigurationContextFactory.createConfigurationContextFromFileSystem(null, null);
 			AuthenticationAdminStub adminStub = new AuthenticationAdminStub(configContext, authAdminEPR);
 			adminStub._getServiceClient().getOptions().setManageSession(true);
 			if (adminStub.login(wso2User, wso2Password, remoteAddress)) {
@@ -102,6 +113,16 @@ public class UserManager {
     	option.setProperty(HTTPConstants.COOKIE_STRING, authCookie);
 	}
 
+	/**
+	 * Create a new user for the HTRC platform
+	 *
+	 * @param userName The user name
+	 * @param password The user's password
+	 * @param claims The <code>ClaimValue[]</code> array of profile claims
+	 * 				 (see <a href="https://htrc3.pti.indiana.edu:9443/carbon/claim-mgt/claim-view.jsp?store=Internal&dialect=http://wso2.org/claims">available claims</a>)
+	 * @param permissions The array of permissions to assign to the user (for example: "login") (can be <code>null</code>)
+	 * @throws UserManagerException Thrown if an error occurred
+	 */
 	public void createUser(String userName, String password, ClaimValue[] claims, String[] permissions) throws UserManagerException {
 		try {
         	// javadoc: addUser(String userName, String password, String[] roles, ClaimValue[] claims, String profileName)
@@ -142,6 +163,13 @@ public class UserManager {
 		}
 	}
 
+	/**
+	 * Delete an existing user
+	 *
+	 * @param userName The user name to delete
+	 * @param deleteHome True to delete the user's home in the registry, False otherwise
+	 * @throws UserManagerException Thrown if a problem occurred
+	 */
 	public void deleteUser(String userName, boolean deleteHome) throws UserManagerException {
 		try {
 			_userAdmin.deleteUser(userName);
@@ -161,6 +189,13 @@ public class UserManager {
 		}
 	}
 
+	/**
+	 * Change a user's password
+	 *
+	 * @param userName The user name
+	 * @param newPassword The new password
+	 * @throws UserManagerException Thrown if a problem occurred
+	 */
 	public void changePassword(String userName, String newPassword) throws UserManagerException {
 		try {
 			_userAdmin.changePassword(userName, newPassword);
@@ -172,6 +207,13 @@ public class UserManager {
 		}
 	}
 
+	/**
+	 * List roles (if <code>userName == null</code>, then list all roles, otherwise list user's roles)
+	 *
+	 * @param userName The user name (can be <code>null</code>)
+	 * @return The set of role names
+	 * @throws UserManagerException Thrown if a problem occurred
+	 */
 	public Set<String> listRoles(String userName) throws UserManagerException {
 		try {
 			Set<String> roles = new HashSet<String>();
@@ -190,6 +232,14 @@ public class UserManager {
 		}
 	}
 
+	/**
+	 * List users (matching a filter)
+	 *
+	 * @param filter The filter to use when listing users
+	 *               ("*" = list all users; "bo*" = list all users whose user name starts with "bo")
+	 * @return The set of users
+	 * @throws UserManagerException Thrown if a problem occurred
+	 */
 	public Set<String> listUsers(String filter) throws UserManagerException {
 		try {
 			String[] users = _userAdmin.listUsers(filter);
@@ -267,7 +317,6 @@ public class UserManager {
 		}
 
 		if (!(properties.containsKey("trustStore->store")
-				&& properties.containsKey("trustStore->password")
 				&& properties.containsKey("trustStore->type"))) {
 			log.error("Trust store configuration missing or incomplete for: {}", commands.configFile);
 			System.exit(-4);
@@ -289,7 +338,8 @@ public class UserManager {
 		log.debug("Using trust store: {}", trustStore);
 
 		System.setProperty("javax.net.ssl.trustStore", trustStore);
-		System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+		if (trustStorePassword != null)
+			System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
 		System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
 
 		if (!(properties.containsKey("wso2->url")
@@ -306,8 +356,7 @@ public class UserManager {
 		Properties htrcProps = properties.getProperties("htrc");
 
 		try {
-			ConfigurationContext configContext = ConfigurationContextFactory.createConfigurationContextFromFileSystem(null, null);
-			UserManager userManager = UserManager.authenticate(wso2Url, wso2User, wso2Password, configContext, htrcProps);
+			UserManager userManager = UserManager.authenticate(wso2Url, wso2User, wso2Password, htrcProps);
 
 			if ("createUser".equals(jc.getParsedCommand())) {
 				String userName = commands.createUserCommand.userName;

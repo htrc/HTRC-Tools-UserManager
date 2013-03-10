@@ -10,6 +10,8 @@
 		<public.svn.root>svn://svn.code.sf.net/p/htrc/code</public.svn.root>
 		<developer.svn.root>svn+ssh://svn.code.sf.net/p/htrc/code</developer.svn.root>
 		<fisheye.svn.root>http://fisheye.htrc.illinois.edu/changelog</fisheye.svn.root>
+		<app.name>htrc-user-manager</app.name>
+		<install.prefix>/usr/local</install.prefix>
 	</properties>
 
 	<dependencies>
@@ -105,21 +107,84 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>appassembler-maven-plugin</artifactId>
 				<version>1.3</version>
-				<configuration>
-					<configurationDirectory>conf</configurationDirectory>
-					<copyConfigurationDirectory>true</copyConfigurationDirectory>
-					<extraJvmArguments>-ea</extraJvmArguments>
-					<platforms>
-						<platform>windows</platform>
-						<platform>unix</platform>
-					</platforms>
-					<programs>
-						<program>
-							<mainClass>edu.illinois.i3.htrc.usermanager.UserManager</mainClass>
-							<name>htrc-user-manager</name>
-						</program>
-					</programs>
-				</configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+						<configuration>
+						    <assembleDirectory>${project.build.directory}/appassembler</assembleDirectory>
+							<configurationDirectory>conf</configurationDirectory>
+							<copyConfigurationDirectory>true</copyConfigurationDirectory>
+							<includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+							<extraJvmArguments>-ea</extraJvmArguments>
+							<platforms>
+								<platform>windows</platform>
+								<platform>unix</platform>
+							</platforms>
+							<programs>
+								<program>
+									<mainClass>edu.illinois.i3.htrc.usermanager.UserManager</mainClass>
+									<name>${app.name}</name>
+								</program>
+							</programs>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+			    <artifactId>jdeb</artifactId>
+			    <groupId>org.vafer</groupId>
+			    <version>1.0.1</version>
+			    <executions>
+			        <execution>
+			            <phase>package</phase>
+			            <goals>
+			                <goal>jdeb</goal>
+			            </goals>
+			            <configuration>
+			                <dataSet>
+			                    <data>
+			                        <src>${project.build.directory}/appassembler</src>
+			                        <type>directory</type>
+			                        <excludes>bin/${app.name}</excludes>
+			                        <mapper>
+			                          <type>perm</type>
+			                          <prefix>${install.prefix}/${app.name}</prefix>
+			                        </mapper>
+			                    </data>
+			                    <data>
+			                        <src>${project.build.directory}/appassembler/bin/${app.name}</src>
+			                        <type>file</type>
+			                        <mapper>
+			                            <type>perm</type>
+			                            <prefix>${install.prefix}/${app.name}/bin</prefix>
+			                            <filemode>755</filemode>
+			                        </mapper>
+			                    </data>
+                                <data>
+									<type>link</type>
+									<symlink>true</symlink>
+									<linkName>${install.prefix}/bin/${app.name}</linkName>
+									<linkTarget>${install.prefix}/${app.name}/bin/${app.name}</linkTarget>
+                                </data>
+                                <data>
+                                    <type>template</type>
+                                    <paths>
+                                        <path>log</path>
+                                    </paths>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>${install.prefix}/${app.name}</prefix>
+                                        <filemode>777</filemode>
+                                    </mapper>
+                                </data>
+			                </dataSet>
+			            </configuration>
+			        </execution>
+			    </executions>
 			</plugin>
 
 			<plugin>
@@ -141,7 +206,7 @@
 	</build>
 
 	<!-- Project Information -->
-	<name>User Manager</name>
+	<name>UserManager</name>
 	<description>Library and application for managing HTRC user accounts</description>
 	<url>http://wiki.htrc.illinois.edu/display/DEV/USRMGR</url>
 
