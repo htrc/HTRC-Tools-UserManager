@@ -188,6 +188,8 @@ public class UserManager {
                 _resourceAdmin.addRolePermission(regUserHome, everyone, permission.toString(), PermissionType.DENY.toString());
             }
 
+            _resourceAdmin.addRolePermission(regUserWorksets, everyone, ResourceActionPermission.GET.toString(), PermissionType.ALLOW.toString());
+
             log.info("User {} created (permissions: {})", userName, Arrays.toString(permissions));
         }
         catch (Exception e) {
