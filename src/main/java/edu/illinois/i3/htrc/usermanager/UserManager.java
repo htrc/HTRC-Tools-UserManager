@@ -113,8 +113,8 @@ public class UserManager {
             option.setManageSession(true);
             option.setProperty(HTTPConstants.COOKIE_STRING, authCookie);
 
-            _userNameRegexp = Pattern.compile(_userStoreInfo.getUserNameRegEx());
-            _roleNameRegexp = Pattern.compile(_userStoreInfo.getRoleNameRegEx());
+            _userNameRegexp = Pattern.compile(_userStoreInfo.getUserNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
+            _roleNameRegexp = Pattern.compile(_userStoreInfo.getRoleNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
         }
         catch (AxisFault e) {
             log.error("Error creating UserAdminStub", e);
