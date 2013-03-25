@@ -77,7 +77,8 @@ public class UserManager {
 
             if (!(configProps.containsKey(Constants.CONFIG_HTRC_USER_HOME)
                     && configProps.containsKey(Constants.CONFIG_HTRC_USER_FILES)
-                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_WORKSETS)))
+                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_WORKSETS)
+                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_JOBS)))
                 throw new UserManagerException("HTRC configuration missing or incomplete");
 
             ConfigurationContext configContext = ConfigurationContextFactory.createConfigurationContextFromFileSystem(null, null);
@@ -169,6 +170,7 @@ public class UserManager {
             String regUserHome = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_HOME), userName);
             String regUserFiles = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_FILES), userName);
             String regUserWorksets = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_WORKSETS), userName);
+            String regUserJobs = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_JOBS), userName);
 
             Collection filesCollection = _registry.newCollection();
             String extra = userName.endsWith("s") ? "'" : "'s";
@@ -180,6 +182,11 @@ public class UserManager {
             worksetsCollection.setDescription(userName + extra + " worksets");
             regUserWorksets = _registry.put(regUserWorksets, worksetsCollection);
             log.debug("Created user worksets collection: {}", regUserWorksets);
+
+            Collection jobsCollection = _registry.newCollection();
+            jobsCollection.setDescription(userName + extra + " jobs");
+            regUserJobs = _registry.put(regUserJobs, jobsCollection);
+            log.debug("Created user jobs collection: {}", regUserJobs);
 
             String everyone = _userStoreInfo.getEveryOneRole();
             for (ResourceActionPermission permission : ALL_PERMISSIONS) {
