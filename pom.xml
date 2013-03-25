@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.illinois.i3.htrc</groupId>
     <artifactId>UserManager</artifactId>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -147,8 +147,8 @@
                     <verbose>false</verbose>
                     <dataSet>
                         <data>
-                            <src>${project.build.directory}/appassembler</src>
                             <type>directory</type>
+                            <src>${project.build.directory}/appassembler</src>
                             <excludes>bin/${app.name}</excludes>
                             <mapper>
                               <type>perm</type>
@@ -156,8 +156,8 @@
                             </mapper>
                         </data>
                         <data>
-                            <src>${project.build.directory}/appassembler/bin/${app.name}</src>
                             <type>file</type>
+                            <src>${project.build.directory}/appassembler/bin/${app.name}</src>
                             <mapper>
                                 <type>perm</type>
                                 <prefix>${install.prefix}/${app.name}/bin</prefix>
@@ -178,7 +178,15 @@
                             <mapper>
                                 <type>perm</type>
                                 <prefix>${install.prefix}/${app.name}</prefix>
-                                <filemode>777</filemode>
+                            </mapper>
+                        </data>
+                        <data>
+                            <type>file</type>
+                            <src>${project.build.directory}/classes/usermanager.log</src>
+                            <mapper>
+                                <type>perm</type>
+                                <prefix>${install.prefix}/${app.name}/log</prefix>
+                                <filemode>642</filemode>
                             </mapper>
                         </data>
                     </dataSet>
