@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.illinois.i3.htrc</groupId>
     <artifactId>UserManager</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.4</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -283,7 +283,8 @@
         <connection>scm:git:${public.code.repo}/HTRC-Tools-UserManager.git</connection>
         <developerConnection>scm:git:${developer.code.repo}/HTRC-Tools-UserManager.git</developerConnection>
         <url>${fisheye.changelog.root}/HTRC-Tools-UserManager</url>
-    </scm>
+      <tag>UserManager-0.4</tag>
+  </scm>
 
     <repositories>
         <repository>
