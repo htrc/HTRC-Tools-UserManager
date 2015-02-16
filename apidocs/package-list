@@ -1,0 +1,5 @@
+edu.illinois.i3.htrc.usermanager
+edu.illinois.i3.htrc.usermanager.commands
+edu.illinois.i3.htrc.usermanager.exceptions
+edu.illinois.i3.htrc.usermanager.utils
+edu.illinois.i3.htrc.usermanager.validators
