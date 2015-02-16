@@ -16,6 +16,7 @@ import net.jmatrix.eproperties.EProperties;
 
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.Options;
+import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.apache.axis2.transport.http.HTTPConstants;
@@ -26,12 +27,9 @@ import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.extensions.stub.ResourceAdminServiceStub;
 import org.wso2.carbon.registry.ws.client.registry.WSRegistryServiceClient;
-import org.wso2.carbon.user.mgt.stub.GetUserStoreInfoUserAdminExceptionException;
 import org.wso2.carbon.user.mgt.stub.UserAdminStub;
-import org.wso2.carbon.user.mgt.stub.types.carbon.ClaimValue;
-import org.wso2.carbon.user.mgt.stub.types.carbon.FlaggedName;
-import org.wso2.carbon.user.mgt.stub.types.carbon.UIPermissionNode;
-import org.wso2.carbon.user.mgt.stub.types.carbon.UserStoreInfo;
+import org.wso2.carbon.user.mgt.stub.UserAdminUserAdminException;
+import org.wso2.carbon.user.mgt.stub.types.carbon.*;
 import org.wso2.carbon.utils.NetworkUtils;
 
 import com.beust.jcommander.JCommander;
@@ -53,6 +51,7 @@ public class UserManager {
 
     private final UserAdminStub _userAdmin;
     private final UserStoreInfo _userStoreInfo;
+    private final UserRealmInfo _userRealmInfo;
     private final WSRegistryServiceClient _registry;
     private final ResourceAdminServiceStub _resourceAdmin;
     private final Properties _configProps;
@@ -102,17 +101,14 @@ public class UserManager {
         String resourceAdminEPR = wso2Url + "ResourceAdminService";
         try {
             _userAdmin = new UserAdminStub(configContext, userAdminEPR);
-            Options option = _userAdmin._getServiceClient().getOptions();
-            option.setManageSession(true);
-            option.setProperty(HTTPConstants.COOKIE_STRING, authCookie);
-            _userStoreInfo = _userAdmin.getUserStoreInfo();
+            createUserAdminClient(authCookie);
 
+            _userRealmInfo = _userAdmin.getUserRealmInfo();
+            _userStoreInfo = _userRealmInfo.getPrimaryUserStoreInfo();
             _registry = new WSRegistryServiceClient(wso2Url, authCookie);
 
             _resourceAdmin = new ResourceAdminServiceStub(configContext, resourceAdminEPR);
-            option = _resourceAdmin._getServiceClient().getOptions();
-            option.setManageSession(true);
-            option.setProperty(HTTPConstants.COOKIE_STRING, authCookie);
+            createResourceAdminClient(authCookie);
 
             _userNameRegexp = Pattern.compile(_userStoreInfo.getUserNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
             _roleNameRegexp = Pattern.compile(_userStoreInfo.getRoleNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
@@ -129,10 +125,26 @@ public class UserManager {
             log.error("Error obtaining the UserStoreInfo instance", e);
             throw new UserManagerException(e);
         }
-        catch (GetUserStoreInfoUserAdminExceptionException e) {
-            log.error("Error obtaining the UserStoreInfo instance", e);
+        catch (UserAdminUserAdminException e) {
+            log.error("Error obtaining the UserRealmInfo instance", e);
             throw new UserManagerException(e);
         }
+    }
+
+    private void createClient(ServiceClient serviceClient, String sessionCookie) {
+        Options option = serviceClient.getOptions();
+        option.setManageSession(true);
+        option.setProperty(HTTPConstants.COOKIE_STRING, sessionCookie);
+    }
+
+    private void createUserAdminClient(String sessionCookie) {
+        ServiceClient serviceClient = _userAdmin._getServiceClient();
+        createClient(serviceClient, sessionCookie);
+    }
+
+    private void createResourceAdminClient(String sessionCookie) {
+        ServiceClient serviceClient = _resourceAdmin._getServiceClient();
+        createClient(serviceClient, sessionCookie);
     }
 
     /**
@@ -163,8 +175,8 @@ public class UserManager {
             _userAdmin.addUser(userName, password, null, claims, "default");
             log.debug("Created user: {}", userName);
 
-            // javadoc: addRole(String roleName, String[] userList, String[] permissions)
-            _userAdmin.addRole(userName, new String[] { userName }, permissions);
+            // javadoc: addRole(String roleName, String[] userList, String[] permissions, boolean isSharedRole)
+            _userAdmin.addRole(userName, new String[] { userName }, permissions, false);
             log.debug("Created role: {} with permissions: {}", userName, Arrays.toString(permissions));
 
             String regUserHome = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_HOME), userName);
@@ -188,7 +200,7 @@ public class UserManager {
             regUserJobs = _registry.put(regUserJobs, jobsCollection);
             log.debug("Created user jobs collection: {}", regUserJobs);
 
-            String everyone = _userStoreInfo.getEveryOneRole();
+            String everyone = _userRealmInfo.getEveryOneRole();
             for (ResourceActionPermission permission : ALL_PERMISSIONS) {
                 // javadoc: addRolePermission(pathToAuthorize, roleToAuthorize, actionToAuthorize, permissionType);
                 _resourceAdmin.addRolePermission(regUserHome, userName, permission.toString(), PermissionType.ALLOW.toString());
@@ -272,7 +284,7 @@ public class UserManager {
         try {
             Set<String> roles = new HashSet<String>();
             FlaggedName[] roleNames = userName != null ?
-                    _userAdmin.getRolesOfUser(userName) : _userAdmin.getAllRolesNames();
+                    _userAdmin.getRolesOfUser(userName, "*", 100) : _userAdmin.getAllRolesNames("*", Integer.MAX_VALUE);
             for (FlaggedName roleName : roleNames)
                 roles.add(roleName.getItemName());
 
@@ -299,7 +311,7 @@ public class UserManager {
             filter = "*";
 
         try {
-            String[] users = _userAdmin.listUsers(filter);
+            String[] users = _userAdmin.listUsers(filter, Integer.MAX_VALUE);
             log.info("Retrieved user list with filter: {}", filter);
             return new HashSet<String>(Arrays.asList(users));
         }
@@ -317,7 +329,7 @@ public class UserManager {
      */
     public String[] getRequiredUserClaims() throws UserManagerException {
         try {
-            String[] reqClaims = _userStoreInfo.getRequiredUserClaims();
+            String[] reqClaims = _userRealmInfo.getRequiredUserClaims();
             log.info("Retrieved the required user claims");
             return reqClaims;
         }
