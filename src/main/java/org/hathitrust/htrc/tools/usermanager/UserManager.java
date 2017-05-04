@@ -275,13 +275,12 @@ public class UserManager {
      * @throws UserManagerException Thrown if an error occurred
      */
     public Set<String> getRoles(String userName) throws UserManagerException {
-        if (userName == null)
-            throw new NullPointerException("userName");
-
         try {
             Set<String> roles = new HashSet<String>();
-            FlaggedName[] roleNames = userName != null ?
-                    _userAdmin.getRolesOfUser(userName, "*", 100) : _userAdmin.getAllRolesNames("*", Integer.MAX_VALUE);
+            FlaggedName[] roleNames =
+                    (userName != null) ?
+                        _userAdmin.getRolesOfUser(userName, "*", 100) :
+                            _userAdmin.getAllRolesNames("*", Integer.MAX_VALUE);
             for (FlaggedName roleName : roleNames)
                 roles.add(roleName.getItemName());
 
@@ -368,7 +367,7 @@ public class UserManager {
 
     private static final String APP_NAME = System.getProperty("app.name", UserManager.class.getSimpleName());
     private static final String BASEDIR = System.getProperty("basedir", ".");
-    public static final String DEFAULT_CONFIG_FILE = BASEDIR + File.separator + "conf" + File.separator + Constants.CONFIG_FILE_NAME;
+    public static final String DEFAULT_CONFIG_FILE = System.getProperty("config", BASEDIR + File.separator + "conf" + File.separator + Constants.CONFIG_FILE_NAME);
 
     public static void main(String[] args) throws Exception {
         UserManagerCommands commands = new UserManagerCommands();
