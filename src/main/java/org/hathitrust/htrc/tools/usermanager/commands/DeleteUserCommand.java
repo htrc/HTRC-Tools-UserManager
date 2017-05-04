@@ -1,10 +1,10 @@
-package edu.illinois.i3.htrc.usermanager.commands;
+package org.hathitrust.htrc.tools.usermanager.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
 
-import edu.illinois.i3.htrc.usermanager.validators.UserNameValidator;
+import org.hathitrust.htrc.tools.usermanager.validators.UserNameValidator;
 
 @Parameters(commandDescription = "Delete an existing user")
 public class DeleteUserCommand {
@@ -24,6 +24,6 @@ public class DeleteUserCommand {
 	public boolean deleteHome = false;
 
 	@ParametersDelegate
-	public final HelpCommand helpCommand = new HelpCommand();
+	public HelpCommand helpCommand = new HelpCommand();
 
 }

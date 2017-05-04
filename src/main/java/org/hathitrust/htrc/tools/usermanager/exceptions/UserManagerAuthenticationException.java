@@ -1,4 +1,4 @@
-package edu.illinois.i3.htrc.usermanager.exceptions;
+package org.hathitrust.htrc.tools.usermanager.exceptions;
 
 @SuppressWarnings("serial")
 public class UserManagerAuthenticationException extends UserManagerException {

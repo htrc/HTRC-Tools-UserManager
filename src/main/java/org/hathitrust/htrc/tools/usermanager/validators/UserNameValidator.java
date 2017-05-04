@@ -1,4 +1,4 @@
-package edu.illinois.i3.htrc.usermanager.validators;
+package org.hathitrust.htrc.tools.usermanager.validators;
 
 import java.util.regex.Pattern;
 

@@ -1,4 +1,4 @@
-package edu.illinois.i3.htrc.usermanager.utils;
+package org.hathitrust.htrc.tools.usermanager.utils;
 
 public enum PermissionType {
 

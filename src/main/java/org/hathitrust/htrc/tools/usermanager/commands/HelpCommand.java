@@ -1,4 +1,4 @@
-package edu.illinois.i3.htrc.usermanager.commands;
+package org.hathitrust.htrc.tools.usermanager.commands;
 
 import com.beust.jcommander.Parameter;
 

@@ -1,18 +1,15 @@
-package edu.illinois.i3.htrc.usermanager;
+package org.hathitrust.htrc.tools.usermanager;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import net.jmatrix.eproperties.EProperties;
 
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.Options;
@@ -35,11 +32,11 @@ import org.wso2.carbon.utils.NetworkUtils;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 
-import edu.illinois.i3.htrc.usermanager.commands.UserManagerCommands;
-import edu.illinois.i3.htrc.usermanager.exceptions.UserManagerAuthenticationException;
-import edu.illinois.i3.htrc.usermanager.exceptions.UserManagerException;
-import edu.illinois.i3.htrc.usermanager.utils.PermissionType;
-import edu.illinois.i3.htrc.usermanager.utils.ResourceActionPermission;
+import org.hathitrust.htrc.tools.usermanager.commands.UserManagerCommands;
+import org.hathitrust.htrc.tools.usermanager.exceptions.UserManagerAuthenticationException;
+import org.hathitrust.htrc.tools.usermanager.exceptions.UserManagerException;
+import org.hathitrust.htrc.tools.usermanager.utils.PermissionType;
+import org.hathitrust.htrc.tools.usermanager.utils.ResourceActionPermission;
 
 public class UserManager {
 
@@ -54,7 +51,7 @@ public class UserManager {
     private final UserRealmInfo _userRealmInfo;
     private final WSRegistryServiceClient _registry;
     private final ResourceAdminServiceStub _resourceAdmin;
-    private final Properties _configProps;
+    private final Config _config;
     private final Pattern _userNameRegexp;
     private final Pattern _roleNameRegexp;
 
@@ -64,20 +61,20 @@ public class UserManager {
      * @param wso2Url The WSO2 G-Reg service URL
      * @param wso2User The username to authenticate to G-Reg (must have admin privileges)
      * @param wso2Password The password for the WSO2 user
-     * @param configProps The HTRC configuration properties to use
+     * @param config The HTRC configuration to use
      * @return An instance of <code>UserManager</code>
      * @throws UserManagerException Thrown if the authentication failed or there was an error communicating with the server
      */
-    public static UserManager authenticate(String wso2Url, String wso2User, String wso2Password, Properties configProps) throws UserManagerException {
+    public static UserManager authenticate(String wso2Url, String wso2User, String wso2Password, Config config) throws UserManagerException {
         if (!wso2Url.endsWith("/")) wso2Url += "/";
         try {
             String authAdminEPR = wso2Url + "AuthenticationAdmin";
             String remoteAddress = NetworkUtils.getLocalHostname();
 
-            if (!(configProps.containsKey(Constants.CONFIG_HTRC_USER_HOME)
-                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_FILES)
-                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_WORKSETS)
-                    && configProps.containsKey(Constants.CONFIG_HTRC_USER_JOBS)))
+            if (!(config.hasPath(Constants.CONFIG_HTRC_USER_HOME)
+                    && config.hasPath(Constants.CONFIG_HTRC_USER_FILES)
+                    && config.hasPath(Constants.CONFIG_HTRC_USER_WORKSETS)
+                    && config.hasPath(Constants.CONFIG_HTRC_USER_JOBS)))
                 throw new UserManagerException("HTRC configuration missing or incomplete");
 
             ConfigurationContext configContext = ConfigurationContextFactory.createConfigurationContextFromFileSystem(null, null);
@@ -85,7 +82,7 @@ public class UserManager {
             adminStub._getServiceClient().getOptions().setManageSession(true);
             if (adminStub.login(wso2User, wso2Password, remoteAddress)) {
                 String authCookie = (String) adminStub._getServiceClient().getServiceContext().getProperty(HTTPConstants.COOKIE_STRING);
-                return new UserManager(wso2Url, configContext, authCookie, configProps);
+                return new UserManager(wso2Url, configContext, authCookie, config);
             } else
                 throw new UserManagerAuthenticationException("Invalid username and/or password");
         }
@@ -95,8 +92,8 @@ public class UserManager {
         }
     }
 
-    private UserManager(String wso2Url, ConfigurationContext configContext, String authCookie, Properties configProps) throws UserManagerException {
-        _configProps = configProps;
+    private UserManager(String wso2Url, ConfigurationContext configContext, String authCookie, Config config) throws UserManagerException {
+        _config = config;
         String userAdminEPR = wso2Url + "UserAdmin";
         String resourceAdminEPR = wso2Url + "ResourceAdminService";
         try {
@@ -179,10 +176,10 @@ public class UserManager {
             _userAdmin.addRole(userName, new String[] { userName }, permissions, false);
             log.debug("Created role: {} with permissions: {}", userName, Arrays.toString(permissions));
 
-            String regUserHome = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_HOME), userName);
-            String regUserFiles = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_FILES), userName);
-            String regUserWorksets = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_WORKSETS), userName);
-            String regUserJobs = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_JOBS), userName);
+            String regUserHome = String.format(_config.getString(Constants.CONFIG_HTRC_USER_HOME), userName);
+            String regUserFiles = String.format(_config.getString(Constants.CONFIG_HTRC_USER_FILES), userName);
+            String regUserWorksets = String.format(_config.getString(Constants.CONFIG_HTRC_USER_WORKSETS), userName);
+            String regUserJobs = String.format(_config.getString(Constants.CONFIG_HTRC_USER_JOBS), userName);
 
             Collection filesCollection = _registry.newCollection();
             String extra = userName.endsWith("s") ? "'" : "'s";
@@ -233,7 +230,7 @@ public class UserManager {
             _userAdmin.deleteRole(userName);
 
             if (deleteHome) {
-                String regUserHome = String.format(_configProps.getProperty(Constants.CONFIG_HTRC_USER_HOME), userName);
+                String regUserHome = String.format(_config.getString(Constants.CONFIG_HTRC_USER_HOME), userName);
                 if (_registry.resourceExists(regUserHome))
                     _registry.delete(regUserHome);
             }
@@ -418,28 +415,20 @@ public class UserManager {
 
         // Load application properties
         File configFile = new File(commands.configFile);
-        EProperties.showVersion = false;
-        EProperties properties = new EProperties();
-        try {
-            properties.load(new FileInputStream(configFile));
-        }
-        catch (IOException e) {
-            log.error("Could not load configuration properties file: " + commands.configFile, e);
-            System.exit(-3);
-        }
+        Config config = ConfigFactory.parseFile(configFile).resolve();
 
-        if (!(properties.containsKey("trustStore->store")
-                && properties.containsKey("trustStore->type"))) {
+        if (!(config.hasPath("trustStore.store")
+                && config.hasPath("trustStore.type"))) {
             log.error("Trust store configuration missing or incomplete for: {}", commands.configFile);
             System.exit(-4);
         }
 
-        String trustStore = properties.getString("trustStore->store");
+        String trustStore = config.getString("trustStore.store");
         if (!(trustStore.startsWith(File.separator) || trustStore.indexOf(":") == 1))
             trustStore = BASEDIR + File.separator + trustStore;
 
-        String trustStorePassword = properties.getString("trustStore->password");
-        String trustStoreType = properties.getString("trustStore->type");
+        String trustStorePassword = config.getString("trustStore.password");
+        String trustStoreType = config.getString("trustStore.type");
 
         File trustStoreFile = new File(trustStore);
         if (!trustStoreFile.canRead()) {
@@ -454,21 +443,21 @@ public class UserManager {
             System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
         System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
 
-        if (!(properties.containsKey("wso2->url")
-                && properties.containsKey("wso2->user")
-                && properties.containsKey("wso2->password"))) {
+        if (!(config.hasPath("wso2.url")
+                && config.hasPath("wso2.user")
+                && config.hasPath("wso2.password"))) {
             log.error("WSO2 server configuration missing or incomplete for: {}", commands.configFile);
             System.exit(-6);
         }
 
-        String wso2Url = properties.getString("wso2->url");
-        String wso2User = properties.getString("wso2->user");
-        String wso2Password = properties.getString("wso2->password");
+        String wso2Url = config.getString("wso2.url");
+        String wso2User = config.getString("wso2.user");
+        String wso2Password = config.getString("wso2.password");
 
-        Properties htrcProps = properties.getProperties("htrc");
+        Config htrcConfig = config.getConfig("htrc");
 
         try {
-            UserManager userManager = UserManager.authenticate(wso2Url, wso2User, wso2Password, htrcProps);
+            UserManager userManager = UserManager.authenticate(wso2Url, wso2User, wso2Password, htrcConfig);
 
             userManager.getAvailablePermissions();
             if ("createUser".equals(jc.getParsedCommand())) {

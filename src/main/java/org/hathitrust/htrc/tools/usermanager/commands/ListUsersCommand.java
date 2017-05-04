@@ -1,4 +1,4 @@
-package edu.illinois.i3.htrc.usermanager.commands;
+package org.hathitrust.htrc.tools.usermanager.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -14,6 +14,6 @@ public class ListUsersCommand {
 	public String filter = "*";
 
 	@ParametersDelegate
-	public final HelpCommand helpCommand = new HelpCommand();
+	public HelpCommand helpCommand = new HelpCommand();
 
 }

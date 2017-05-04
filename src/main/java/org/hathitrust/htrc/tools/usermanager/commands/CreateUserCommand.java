@@ -1,18 +1,17 @@
-package edu.illinois.i3.htrc.usermanager.commands;
+package org.hathitrust.htrc.tools.usermanager.commands;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hathitrust.htrc.tools.usermanager.validators.EmailValidator;
+import org.hathitrust.htrc.tools.usermanager.validators.FullNameValidator;
+import org.hathitrust.htrc.tools.usermanager.validators.PasswordValidator;
+import org.hathitrust.htrc.tools.usermanager.validators.UserNameValidator;
 import org.wso2.carbon.CarbonConstants;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
-
-import edu.illinois.i3.htrc.usermanager.validators.EmailValidator;
-import edu.illinois.i3.htrc.usermanager.validators.FullNameValidator;
-import edu.illinois.i3.htrc.usermanager.validators.PasswordValidator;
-import edu.illinois.i3.htrc.usermanager.validators.UserNameValidator;
 
 @Parameters(commandDescription = "Create a new user")
 public class CreateUserCommand {
@@ -58,6 +57,6 @@ public class CreateUserCommand {
 	public List<String> permissions = new ArrayList<String>();
 
 	@ParametersDelegate
-	public final HelpCommand helpCommand = new HelpCommand();
+	public HelpCommand helpCommand = new HelpCommand();
 
 }
