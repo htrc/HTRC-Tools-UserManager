@@ -42,14 +42,14 @@ public class UserManager {
 
     private static final Logger log = LoggerFactory.getLogger(UserManager.class);
     private static final ResourceActionPermission[] ALL_PERMISSIONS = new ResourceActionPermission[]{
-            ResourceActionPermission.GET, ResourceActionPermission.PUT,
-            ResourceActionPermission.DELETE, ResourceActionPermission.AUTHORIZE
+        ResourceActionPermission.GET, ResourceActionPermission.PUT,
+        ResourceActionPermission.DELETE, ResourceActionPermission.AUTHORIZE
     };
     private static final String APP_NAME =
-            System.getProperty("app.name", UserManager.class.getSimpleName());
+        System.getProperty("app.name", UserManager.class.getSimpleName());
     private static final String BASEDIR = System.getProperty("basedir", ".");
     public static final String DEFAULT_CONFIG_FILE = System.getProperty("config",
-            BASEDIR + File.separator + "conf" + File.separator + Constants.CONFIG_FILE_NAME);
+        BASEDIR + File.separator + "conf" + File.separator + Constants.CONFIG_FILE_NAME);
     private final UserAdminStub _userAdmin;
     private final UserStoreInfo _userStoreInfo;
     private final UserRealmInfo _userRealmInfo;
@@ -60,8 +60,8 @@ public class UserManager {
     private final Pattern _roleNameRegexp;
 
     private UserManager(RemoteRegistry registry, String wso2ServicesEpr,
-            ConfigurationContext configContext, String authCookie, Config config)
-            throws UserManagerException {
+        ConfigurationContext configContext, String authCookie, Config config)
+        throws UserManagerException {
         _config = config;
         String userAdminEPR = wso2ServicesEpr + "UserAdmin";
         String resourceAdminEPR = wso2ServicesEpr + "ResourceAdminService";
@@ -76,10 +76,10 @@ public class UserManager {
             _resourceAdmin = new ResourceAdminServiceStub(configContext, resourceAdminEPR);
             createResourceAdminClient(authCookie);
 
-            _userNameRegexp = Pattern.compile(_userStoreInfo.getUserNameRegEx()
-                    .replaceAll("\\\\\\\\", "\\\\"));
-            _roleNameRegexp = Pattern.compile(_userStoreInfo.getRoleNameRegEx()
-                    .replaceAll("\\\\\\\\", "\\\\"));
+            _userNameRegexp = Pattern.compile(
+                _userStoreInfo.getUserNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
+            _roleNameRegexp = Pattern.compile(
+                _userStoreInfo.getRoleNameRegEx().replaceAll("\\\\\\\\", "\\\\"));
         } catch (AxisFault e) {
             log.error("Error creating UserAdminStub", e);
             throw new UserManagerException(e);
@@ -107,7 +107,7 @@ public class UserManager {
      * communicating with the server
      */
     public static UserManager authenticate(String wso2ServicesEpr, String wso2RegistryEpr,
-            String wso2User, String wso2Password, Config config) throws UserManagerException {
+        String wso2User, String wso2Password, Config config) throws UserManagerException {
         if (!wso2ServicesEpr.endsWith("/")) {
             wso2ServicesEpr += "/";
         }
@@ -116,20 +116,20 @@ public class UserManager {
             String remoteAddress = NetworkUtils.getLocalHostname();
 
             if (!(config.hasPath(Constants.CONFIG_HTRC_USER_HOME)
-                    && config.hasPath(Constants.CONFIG_HTRC_USER_FILES)
-                    && config.hasPath(Constants.CONFIG_HTRC_USER_WORKSETS)
-                    && config.hasPath(Constants.CONFIG_HTRC_USER_JOBS))) {
+                && config.hasPath(Constants.CONFIG_HTRC_USER_FILES)
+                && config.hasPath(Constants.CONFIG_HTRC_USER_WORKSETS)
+                && config.hasPath(Constants.CONFIG_HTRC_USER_JOBS))) {
                 throw new UserManagerException("HTRC configuration missing or incomplete");
             }
 
             RemoteRegistry remoteRegistry = new RemoteRegistry(wso2RegistryEpr, wso2User, wso2Password);
             ConfigurationContext configContext = ConfigurationContextFactory
-                    .createConfigurationContextFromFileSystem(null, null);
+                .createConfigurationContextFromFileSystem(null, null);
             AuthenticationAdminStub adminStub = new AuthenticationAdminStub(configContext, authAdminEPR);
             adminStub._getServiceClient().getOptions().setManageSession(true);
             if (adminStub.login(wso2User, wso2Password, remoteAddress)) {
                 String authCookie = (String) adminStub._getServiceClient().getServiceContext()
-                        .getProperty(HTTPConstants.COOKIE_STRING);
+                    .getProperty(HTTPConstants.COOKIE_STRING);
                 return new UserManager(remoteRegistry, wso2ServicesEpr, configContext, authCookie, config);
             } else {
                 throw new UserManagerAuthenticationException("Invalid username and/or password");
@@ -187,9 +187,8 @@ public class UserManager {
         Config config = ConfigFactory.parseFile(configFile).resolve();
 
         if (!(config.hasPath("trustStore.store")
-                && config.hasPath("trustStore.type"))) {
-            log.error("Trust store configuration missing or incomplete for: {}",
-                    commands.configFile);
+            && config.hasPath("trustStore.type"))) {
+            log.error("Trust store configuration missing or incomplete for: {}", commands.configFile);
             System.exit(-4);
         }
 
@@ -216,9 +215,9 @@ public class UserManager {
         System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
 
         if (!(config.hasPath("wso2.services_epr")
-                && config.hasPath("wso2.registry_epr")
-                && config.hasPath("wso2.user")
-                && config.hasPath("wso2.password"))) {
+            && config.hasPath("wso2.registry_epr")
+            && config.hasPath("wso2.user")
+            && config.hasPath("wso2.password"))) {
             log.error("WSO2 server configuration missing or incomplete for: {}", commands.configFile);
             System.exit(-6);
         }
@@ -232,7 +231,7 @@ public class UserManager {
 
         try {
             UserManager userManager = UserManager.authenticate(
-                    wso2ServicesEpr, wso2RegistryEpr, wso2User, wso2Password, htrcConfig);
+                wso2ServicesEpr, wso2RegistryEpr, wso2User, wso2Password, htrcConfig);
 
             userManager.getAvailablePermissions();
             if ("createUser".equals(jc.getParsedCommand())) {
@@ -267,8 +266,8 @@ public class UserManager {
                 emailClaim.setClaimURI("http://wso2.org/claims/emailaddress");
                 emailClaim.setValue(email);
 
-                userManager.createUser(userName, password, new ClaimValue[]{
-                        firstNameClaim, lastNameClaim, emailClaim
+                userManager.createUser(userName, password, new ClaimValue[] {
+                    firstNameClaim, lastNameClaim, emailClaim
                 }, permissions);
             } else if ("deleteUser".equals(jc.getParsedCommand())) {
                 String userName = commands.deleteUserCommand.userName;
@@ -332,7 +331,7 @@ public class UserManager {
      * @see #getAvailablePermissions()
      */
     public void createUser(String userName, String password, ClaimValue[] claims,
-            String[] permissions) throws UserManagerException {
+        String[] permissions) throws UserManagerException {
         if (userName == null) {
             throw new IllegalArgumentException("userName cannot be null");
         }
@@ -343,10 +342,10 @@ public class UserManager {
 
         try {
             if (!(_userNameRegexp.matcher(userName).matches() &&
-                    _roleNameRegexp.matcher(userName).matches())) {
+                _roleNameRegexp.matcher(userName).matches())) {
                 throw new UserManagerException(
-                        "Invalid username; Must conform to both of the following regexps: "
-                                + _userNameRegexp.pattern() + " and " + _roleNameRegexp.pattern());
+                    "Invalid username; Must conform to both of the following regexps: "
+                        + _userNameRegexp.pattern() + " and " + _roleNameRegexp.pattern());
             }
 
             // javadoc: addUser(String userName, String password, String[] roles, ClaimValue[] claims, String profileName)
@@ -382,17 +381,17 @@ public class UserManager {
             for (ResourceActionPermission permission : ALL_PERMISSIONS) {
                 // javadoc: addRolePermission(pathToAuthorize, roleToAuthorize, actionToAuthorize, permissionType);
                 log.debug("Setting permission {} for {} on {} to ALLOW",
-                        permission.getPermission(), userName, regUserHome);
+                    permission.getPermission(), userName, regUserHome);
                 _resourceAdmin.addRolePermission(regUserHome, userName, permission.toString(),
-                        PermissionType.ALLOW.toString());
+                    PermissionType.ALLOW.toString());
                 log.debug("Setting permission {} for {} on {} to DENY",
-                        permission.getPermission(), everyone, regUserHome);
+                    permission.getPermission(), everyone, regUserHome);
                 _resourceAdmin.addRolePermission(regUserHome, everyone, permission.toString(),
-                        PermissionType.DENY.toString());
+                    PermissionType.DENY.toString());
             }
 
             _resourceAdmin.addRolePermission(regUserWorksets, everyone,
-                    ResourceActionPermission.GET.toString(), PermissionType.ALLOW.toString());
+                ResourceActionPermission.GET.toString(), PermissionType.ALLOW.toString());
 
             log.info("User {} created (permissions: {})", userName, Arrays.toString(permissions));
         } catch (Exception e) {
@@ -418,7 +417,8 @@ public class UserManager {
             _userAdmin.deleteRole(userName);
 
             if (deleteHome) {
-                String regUserHome = String.format(_config.getString(Constants.CONFIG_HTRC_USER_HOME), userName);
+                String regUserHome = String.format(
+                    _config.getString(Constants.CONFIG_HTRC_USER_HOME), userName);
                 if (_registry.resourceExists(regUserHome)) {
                     _registry.delete(regUserHome);
                 }
@@ -468,9 +468,9 @@ public class UserManager {
         try {
             Set<String> roles = new HashSet<String>();
             FlaggedName[] roleNames =
-                    (userName != null) ?
-                            _userAdmin.getRolesOfUser(userName, "*", 100) :
-                            _userAdmin.getAllRolesNames("*", Integer.MAX_VALUE);
+                (userName != null) ?
+                    _userAdmin.getRolesOfUser(userName, "*", 100) :
+                    _userAdmin.getAllRolesNames("*", Integer.MAX_VALUE);
             for (FlaggedName roleName : roleNames) {
                 roles.add(roleName.getItemName());
             }

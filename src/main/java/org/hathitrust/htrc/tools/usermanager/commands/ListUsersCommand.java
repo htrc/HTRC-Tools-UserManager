@@ -7,13 +7,13 @@ import com.beust.jcommander.ParametersDelegate;
 @Parameters(commandDescription = "List all users")
 public class ListUsersCommand {
 
-	@Parameter(
-			names = { "-f", "--filter" },
-			description = "The user result filter"
-	)
-	public String filter = "*";
+    @Parameter(
+        names = {"-f", "--filter"},
+        description = "The user result filter"
+    )
+    public String filter = "*";
 
-	@ParametersDelegate
-	public HelpCommand helpCommand = new HelpCommand();
+    @ParametersDelegate
+    public HelpCommand helpCommand = new HelpCommand();
 
 }
