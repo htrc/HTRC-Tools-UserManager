@@ -1,5 +1,7 @@
 package org.hathitrust.htrc.tools.usermanager;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
@@ -10,33 +12,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
-import org.wso2.carbon.registry.core.Collection;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
-import org.wso2.carbon.registry.extensions.stub.ResourceAdminServiceStub;
-import org.wso2.carbon.registry.ws.client.registry.WSRegistryServiceClient;
-import org.wso2.carbon.user.mgt.stub.UserAdminStub;
-import org.wso2.carbon.user.mgt.stub.UserAdminUserAdminException;
-import org.wso2.carbon.user.mgt.stub.types.carbon.*;
-import org.wso2.carbon.utils.NetworkUtils;
-
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
-
 import org.hathitrust.htrc.tools.usermanager.commands.UserManagerCommands;
 import org.hathitrust.htrc.tools.usermanager.exceptions.UserManagerAuthenticationException;
 import org.hathitrust.htrc.tools.usermanager.exceptions.UserManagerException;
 import org.hathitrust.htrc.tools.usermanager.utils.PermissionType;
 import org.hathitrust.htrc.tools.usermanager.utils.ResourceActionPermission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
+import org.wso2.carbon.registry.app.RemoteRegistry;
+import org.wso2.carbon.registry.core.Collection;
+import org.wso2.carbon.registry.extensions.stub.ResourceAdminServiceStub;
+import org.wso2.carbon.user.mgt.stub.UserAdminStub;
+import org.wso2.carbon.user.mgt.stub.UserAdminUserAdminException;
+import org.wso2.carbon.user.mgt.stub.types.carbon.ClaimValue;
+import org.wso2.carbon.user.mgt.stub.types.carbon.FlaggedName;
+import org.wso2.carbon.user.mgt.stub.types.carbon.UIPermissionNode;
+import org.wso2.carbon.user.mgt.stub.types.carbon.UserRealmInfo;
+import org.wso2.carbon.user.mgt.stub.types.carbon.UserStoreInfo;
+import org.wso2.carbon.utils.NetworkUtils;
 
 public class UserManager {
 
@@ -49,26 +49,26 @@ public class UserManager {
     private final UserAdminStub _userAdmin;
     private final UserStoreInfo _userStoreInfo;
     private final UserRealmInfo _userRealmInfo;
-    private final WSRegistryServiceClient _registry;
+    private final RemoteRegistry _registry;
     private final ResourceAdminServiceStub _resourceAdmin;
     private final Config _config;
     private final Pattern _userNameRegexp;
     private final Pattern _roleNameRegexp;
-
     /**
      * Authenticate against a WSO2 G-Reg server and obtain a <code>UserManager</code> instance
      *
-     * @param wso2Url The WSO2 G-Reg service URL
+     * @param wso2ServicesEpr The WSO2 Carbon services URL
+     * @param wso2RegistryEpr The WSO2 Registry service URL
      * @param wso2User The username to authenticate to G-Reg (must have admin privileges)
      * @param wso2Password The password for the WSO2 user
      * @param config The HTRC configuration to use
      * @return An instance of <code>UserManager</code>
      * @throws UserManagerException Thrown if the authentication failed or there was an error communicating with the server
      */
-    public static UserManager authenticate(String wso2Url, String wso2User, String wso2Password, Config config) throws UserManagerException {
-        if (!wso2Url.endsWith("/")) wso2Url += "/";
+    public static UserManager authenticate(String wso2ServicesEpr, String wso2RegistryEpr, String wso2User, String wso2Password, Config config) throws UserManagerException {
+        if (!wso2ServicesEpr.endsWith("/")) wso2ServicesEpr += "/";
         try {
-            String authAdminEPR = wso2Url + "AuthenticationAdmin";
+            String authAdminEPR = wso2ServicesEpr + "AuthenticationAdmin";
             String remoteAddress = NetworkUtils.getLocalHostname();
 
             if (!(config.hasPath(Constants.CONFIG_HTRC_USER_HOME)
@@ -77,12 +77,13 @@ public class UserManager {
                     && config.hasPath(Constants.CONFIG_HTRC_USER_JOBS)))
                 throw new UserManagerException("HTRC configuration missing or incomplete");
 
+            RemoteRegistry remoteRegistry = new RemoteRegistry(wso2RegistryEpr, wso2User, wso2Password);
             ConfigurationContext configContext = ConfigurationContextFactory.createConfigurationContextFromFileSystem(null, null);
             AuthenticationAdminStub adminStub = new AuthenticationAdminStub(configContext, authAdminEPR);
             adminStub._getServiceClient().getOptions().setManageSession(true);
             if (adminStub.login(wso2User, wso2Password, remoteAddress)) {
                 String authCookie = (String) adminStub._getServiceClient().getServiceContext().getProperty(HTTPConstants.COOKIE_STRING);
-                return new UserManager(wso2Url, configContext, authCookie, config);
+                return new UserManager(remoteRegistry, wso2ServicesEpr, configContext, authCookie, config);
             } else
                 throw new UserManagerAuthenticationException("Invalid username and/or password");
         }
@@ -92,17 +93,17 @@ public class UserManager {
         }
     }
 
-    private UserManager(String wso2Url, ConfigurationContext configContext, String authCookie, Config config) throws UserManagerException {
+    private UserManager(RemoteRegistry registry, String wso2ServicesEpr, ConfigurationContext configContext, String authCookie, Config config) throws UserManagerException {
         _config = config;
-        String userAdminEPR = wso2Url + "UserAdmin";
-        String resourceAdminEPR = wso2Url + "ResourceAdminService";
+        String userAdminEPR = wso2ServicesEpr + "UserAdmin";
+        String resourceAdminEPR = wso2ServicesEpr + "ResourceAdminService";
         try {
             _userAdmin = new UserAdminStub(configContext, userAdminEPR);
             createUserAdminClient(authCookie);
 
             _userRealmInfo = _userAdmin.getUserRealmInfo();
             _userStoreInfo = _userRealmInfo.getPrimaryUserStoreInfo();
-            _registry = new WSRegistryServiceClient(wso2Url, authCookie);
+            _registry = registry;
 
             _resourceAdmin = new ResourceAdminServiceStub(configContext, resourceAdminEPR);
             createResourceAdminClient(authCookie);
@@ -114,16 +115,15 @@ public class UserManager {
             log.error("Error creating UserAdminStub", e);
             throw new UserManagerException(e);
         }
-        catch (RegistryException e) {
-            log.error("Error creating WSRegistryServiceClient", e);
-            throw new UserManagerException(e);
-        }
         catch (RemoteException e) {
             log.error("Error obtaining the UserStoreInfo instance", e);
             throw new UserManagerException(e);
         }
         catch (UserAdminUserAdminException e) {
             log.error("Error obtaining the UserRealmInfo instance", e);
+            throw new UserManagerException(e);
+        }
+        catch (Exception e) {
             throw new UserManagerException(e);
         }
     }
@@ -184,23 +184,25 @@ public class UserManager {
             Collection filesCollection = _registry.newCollection();
             String extra = userName.endsWith("s") ? "'" : "'s";
             filesCollection.setDescription(userName + extra + " file space");
-            regUserFiles = _registry.put(regUserFiles, filesCollection);
-            log.debug("Created user filespace collection: {}", regUserFiles);
+            String regUserFilesPath = _registry.put(regUserFiles, filesCollection);
+            log.debug("Created user filespace collection: {}", regUserFilesPath);
 
             Collection worksetsCollection = _registry.newCollection();
             worksetsCollection.setDescription(userName + extra + " worksets");
-            regUserWorksets = _registry.put(regUserWorksets, worksetsCollection);
-            log.debug("Created user worksets collection: {}", regUserWorksets);
+            String regUserWorksetsPath = _registry.put(regUserWorksets, worksetsCollection);
+            log.debug("Created user worksets collection: {}", regUserWorksetsPath);
 
             Collection jobsCollection = _registry.newCollection();
             jobsCollection.setDescription(userName + extra + " jobs");
-            regUserJobs = _registry.put(regUserJobs, jobsCollection);
-            log.debug("Created user jobs collection: {}", regUserJobs);
+            String regUserJobsPath = _registry.put(regUserJobs, jobsCollection);
+            log.debug("Created user jobs collection: {}", regUserJobsPath);
 
             String everyone = _userRealmInfo.getEveryOneRole();
             for (ResourceActionPermission permission : ALL_PERMISSIONS) {
                 // javadoc: addRolePermission(pathToAuthorize, roleToAuthorize, actionToAuthorize, permissionType);
+                log.debug("Setting permission {} for {} on {} to ALLOW", permission.toString(), userName, regUserHome);
                 _resourceAdmin.addRolePermission(regUserHome, userName, permission.toString(), PermissionType.ALLOW.toString());
+                log.debug("Setting permission {} for {} on {} to DENY", permission.toString(), everyone, regUserHome);
                 _resourceAdmin.addRolePermission(regUserHome, everyone, permission.toString(), PermissionType.DENY.toString());
             }
 
@@ -442,21 +444,23 @@ public class UserManager {
             System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
         System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
 
-        if (!(config.hasPath("wso2.url")
+        if (!(config.hasPath("wso2.services_epr")
+                && config.hasPath("wso2.registry_epr")
                 && config.hasPath("wso2.user")
                 && config.hasPath("wso2.password"))) {
             log.error("WSO2 server configuration missing or incomplete for: {}", commands.configFile);
             System.exit(-6);
         }
 
-        String wso2Url = config.getString("wso2.url");
+        String wso2ServicesEpr = config.getString("wso2.services_epr");
+        String wso2RegistryEpr = config.getString("wso2.registry_epr");
         String wso2User = config.getString("wso2.user");
         String wso2Password = config.getString("wso2.password");
 
         Config htrcConfig = config.getConfig("htrc");
 
         try {
-            UserManager userManager = UserManager.authenticate(wso2Url, wso2User, wso2Password, htrcConfig);
+            UserManager userManager = UserManager.authenticate(wso2ServicesEpr, wso2RegistryEpr, wso2User, wso2Password, htrcConfig);
 
             userManager.getAvailablePermissions();
             if ("createUser".equals(jc.getParsedCommand())) {
