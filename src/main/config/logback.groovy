@@ -33,7 +33,9 @@ appender("FILE", FileAppender) {
     }
 }
 
-logger("edu.illinois.i3.htrc.usermanager", DEBUG)
+logger("org.hathitrust.htrc.tools.usermanager", DEBUG)
 logger("org.apache.axis2", OFF)
+logger("org.apache.axiom.util.stax.dialect.StAXDialectDetector", ERROR)
+logger("org.apache.commons.httpclient", ERROR)
 
 root(INFO, ["STDERR","FILE"])
