@@ -115,7 +115,7 @@
                         </goals>
                         <configuration>
                             <assembleDirectory>${project.build.directory}/appassembler</assembleDirectory>
-                            <configurationDirectory>conf</configurationDirectory>
+                            <configurationDirectory>config</configurationDirectory>
                             <copyConfigurationDirectory>true</copyConfigurationDirectory>
                             <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
                             <extraJvmArguments>-ea</extraJvmArguments>

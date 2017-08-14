@@ -49,7 +49,7 @@ public class UserManager {
         System.getProperty("app.name", UserManager.class.getSimpleName());
     private static final String BASEDIR = System.getProperty("basedir", ".");
     public static final String DEFAULT_CONFIG_FILE = System.getProperty("config",
-        BASEDIR + File.separator + "conf" + File.separator + Constants.CONFIG_FILE_NAME);
+        BASEDIR + File.separator + "config" + File.separator + Constants.CONFIG_FILE_NAME);
     private final UserAdminStub _userAdmin;
     private final UserStoreInfo _userStoreInfo;
     private final UserRealmInfo _userRealmInfo;
@@ -233,7 +233,6 @@ public class UserManager {
             UserManager userManager = UserManager.authenticate(
                 wso2ServicesEpr, wso2RegistryEpr, wso2User, wso2Password, htrcConfig);
 
-            userManager.getAvailablePermissions();
             if ("createUser".equals(jc.getParsedCommand())) {
                 if (commands.createUserCommand.helpCommand.help) {
                     jc.usage("createUser");
@@ -378,20 +377,29 @@ public class UserManager {
             log.debug("Created user jobs collection: {}", regUserJobsPath);
 
             String everyone = _userRealmInfo.getEveryOneRole();
-            for (ResourceActionPermission permission : ALL_PERMISSIONS) {
-                // javadoc: addRolePermission(pathToAuthorize, roleToAuthorize, actionToAuthorize, permissionType);
-                log.debug("Setting permission {} for {} on {} to ALLOW",
-                    permission.getPermission(), userName, regUserHome);
-                _resourceAdmin.addRolePermission(regUserHome, userName, permission.toString(),
-                    PermissionType.ALLOW.toString());
-                log.debug("Setting permission {} for {} on {} to DENY",
-                    permission.getPermission(), everyone, regUserHome);
-                _resourceAdmin.addRolePermission(regUserHome, everyone, permission.toString(),
-                    PermissionType.DENY.toString());
-            }
+            // see: http://alokayasoya.blogspot.com/2015/11/prgrammatically-control-wso2-registry.html
+            String homePermissions = String.format(
+              "%s:ra^true:wa^true:da^true:aa^true|%s:rd^true:wd^true:dd^true:ad^true",
+                userName, everyone
+            );
+            _resourceAdmin.changeRolePermissions(regUserHome, homePermissions);
+//            for (ResourceActionPermission permission : ALL_PERMISSIONS) {
+//                // javadoc: addRolePermission(pathToAuthorize, roleToAuthorize, actionToAuthorize, permissionType);
+//                log.debug("Setting permission {} for {} on {} to ALLOW",
+//                    permission.getPermission(), userName, regUserHome);
+//                _resourceAdmin.addRolePermission(regUserHome, userName, permission.toString(),
+//                    PermissionType.ALLOW.toString());
+//                log.debug("Setting permission {} for {} on {} to DENY",
+//                    permission.getPermission(), everyone, regUserHome);
+//                _resourceAdmin.addRolePermission(regUserHome, everyone, permission.toString(),
+//                    PermissionType.DENY.toString());
+//            }
 
-            _resourceAdmin.addRolePermission(regUserWorksets, everyone,
-                ResourceActionPermission.GET.toString(), PermissionType.ALLOW.toString());
+            _resourceAdmin.changeRolePermissions(regUserWorksets,
+                String.format("%s:ra^true", everyone));
+
+//            _resourceAdmin.addRolePermission(regUserWorksets, everyone,
+//                ResourceActionPermission.GET.toString(), PermissionType.ALLOW.toString());
 
             log.info("User {} created (permissions: {})", userName, Arrays.toString(permissions));
         } catch (Exception e) {
